@@ -1,0 +1,37 @@
+---
+name: how
+description: "Use for \"how does X work\", code walkthroughs before changing something, and placement / ownership / layering questions (\"where should this live\", \"which package owns this\", \"is this the right layer\"). Explains subsystem architecture, runtime flow, onboarding mental models. Use why for motivation."
+---
+
+# How
+
+Explore the codebase to answer "how does X work?" questions. Produce architectural explanations at the level of a senior engineer onboarding onto a subsystem, enough to build a working mental model, not so much that it reads like annotated source code.
+
+Every spawn is a Task subagent with `subagent_type: generalPurpose` and `readonly: true`. Explorers use the `how explorer` line in the sebstack settings file (`~/.cursor/rules/sebstack-models.mdc` in Cursor, `~/.claude/rules/sebstack-models.md` in Claude Code, `~/.agents/sebstack-models.md` in other harnesses). Explainers use the `how explainer` line. Leave `model` unset when the file or role is missing, when the value is `auto` or `inherit-parent`, or when no valid slug remains after a rejection. The subagent then uses the parent model. For a rejected configured slug, use the closest valid slug of the same family from the error message or harness model list, otherwise fall back to the parent and say so. Pick each subagent's reasoning level and fast or standard speed for the job, per the Subagents section of the **sebmode** skill.
+
+## 1. Assess complexity
+
+If the scope is ambiguous, state your interpretation and explore. The user can redirect.
+
+- **Simple** (a single module, a small utility, a narrow question such as "how does function X work"): no explorers. Spawn one explainer that explores and explains in one pass, built from `references/explainer-prompt.md` without the explorer-findings section. Go to step 4.
+- **Complex** (a subsystem spanning multiple files or services, a cross-cutting feature, a full architectural overview): go to step 2.
+
+When in doubt, take the simple path.
+
+**Other harnesses.** The spawns in this skill use Cursor's `Task` tool. In another harness, use its subagent tool: `Agent` in Claude Code (`subagent_type: general-purpose`), `task` in OpenCode (`subagent_type: general`), `spawn_agent` in Codex. Keep the prompt and the model. Drop parameters your tool doesn't have. If your harness has no subagent tool, as in Pi without an extension, run each role yourself, one after another.
+
+## 2. Explore (complex only)
+
+Decompose the question into 2 to 4 angles, each a distinct slice of the subsystem. Spawn all explorers in a single message, each with `references/explorer-prompt.md` and its angle filled in.
+
+## 3. Synthesize (complex only)
+
+Once all explorers have returned, spawn one explainer with `references/explainer-prompt.md` and every explorer's findings filled in.
+
+## 4. Present
+
+Present the explainer's output. Light edits for clarity or context from the conversation are fine. Do not substantially rewrite it.
+
+## Output format
+
+The explanation uses the sections defined in `references/explainer-prompt.md`, dropping any that do not apply: Overview, Key Concepts, How It Works, Where Things Live, Gotchas.
